@@ -28,9 +28,12 @@ function htmlPage(title: string, content: string, extraScript = ''): string {
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="SnapShot API — Screenshot-as-a-Service. One endpoint, instant API key, no setup. Capture any webpage as PNG or JPEG.">
-<meta name="keywords" content="screenshot API, webpage screenshot, Puppeteer API, screenshot service">
+<meta name="keywords" content="screenshot API, webpage screenshot, Puppeteer API, screenshot service, headless browser API">
 <meta property="og:title" content="SnapShot API — Screenshot-as-a-Service">
-<meta property="og:description" content="One endpoint, instant API key, no setup. Capture any webpage as a screenshot.">
+<meta property="og:description" content="One endpoint, instant API key, no setup. Capture any webpage as a screenshot. From \$0/mo.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SnapShot API — Screenshot-as-a-Service">
+<meta name="twitter:description" content="One endpoint, instant key. Screenshot any webpage as PNG/JPEG. From \$0/mo.">
 <title>${title} — SnapShot API</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -113,19 +116,20 @@ app.get('/', (c) => {
   const content = `
 <div class="hero">
 <h1>SnapShot API</h1>
-<p>Screenshot-as-a-Service. One endpoint, instant key, no setup.</p>
-<p class="hero-sub">Built with Puppeteer · PNG & JPEG · 100/mo free · <a href="https://github.com/bakasa/snapshot-action" target="_blank" style="color:#22c55e;text-decoration:none;font-weight:600">GitHub Action ↗</a></p>
+<p>Screenshot any webpage with one curl command. Key in 0 seconds, screenshot in 2-5.</p>
+<p class="hero-sub">No signup · No OAuth · No Docker · No self-hosting · <a href="https://github.com/bakasa/snapshot-action" target="_blank" style="color:#22c55e;text-decoration:none;font-weight:600">GitHub Action ↗</a></p>
 </div>
 
 <div class="card" style="text-align:center">
-<h2>Get your free API key in one click</h2>
-<button class="btn" id="getKeyBtn" onclick="getKey()">Generate Free API Key</button>
+<h2>Try it now — get a free API key instantly</h2>
+<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:1rem">100 screenshots/month free. No email, no credit card, no signup.</p>
+<button class="btn" id="getKeyBtn" onclick="getKey()">Generate Free API Key →</button>
 <div class="gotokey" id="keyResult">
 <div class="key-display">
 <span id="keyDisplay"></span>
 <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copy</button>
 </div>
-<p style="color:#a1a1aa;font-size:.8rem;margin-top:.5rem">This key gives you 100 screenshots/month. No signup, no email.</p>
+<p style="color:#a1a1aa;font-size:.8rem;margin-top:.5rem">Your free key — 100 screenshots/month. Keep this safe!</p>
 </div>
 <div class="share-section" id="shareSection">
 <p>🚀 <strong>Share & get 50 more screenshots free</strong> — when someone signs up with your link, you both get +50!</p>
@@ -139,9 +143,9 @@ app.get('/', (c) => {
 <div class="card">
 <h2>How it works</h2>
 <div class="steps">
-<div class="step"><div class="num">1</div><h3>Get a key</h3><p>Click the button above or curl /key — instant API key, zero friction</p></div>
-<div class="step"><div class="num">2</div><h3>Capture any page</h3><p>Pass your key and a URL to /screenshot — returns a PNG in 2-5 seconds</p></div>
-<div class="step"><div class="num">3</div><h3>Share & earn</h3><p>Share your referral link — each signup gives you and your friend +50 free screenshots</p></div>
+<div class="step"><div class="num">1</div><h3>Get a key</h3><p>Click "Generate" or curl /key — instant API key, zero friction, no account</p></div>
+<div class="step"><div class="num">2</div><h3>Capture any page</h3><p>Pass your key and a URL to /screenshot — returns a PNG (or JPEG) in 2-5 seconds</p></div>
+<div class="step"><div class="num">3</div><h3>Use it anywhere</h3><p>Embed in dashboards, CI/CD pipelines, LLM workflows, or monitoring — one endpoint does it all</p></div>
 </div>
 </div>
 
@@ -171,38 +175,60 @@ app.get('/', (c) => {
 </div>
 
 <div class="card">
-<h2>Built for</h2>
+<h2>Why SnapShot API?</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem;margin-top:.5rem">
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
+<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Zero setup</h3>
+<p style="font-size:.8rem;color:#a1a1aa">No account, no email, no credit card. Get a key in one click, take a screenshot in one curl.</p>
+</div>
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
+<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Simple pricing</h3>
+<p style="font-size:.8rem;color:#a1a1aa">Free tier: 100 screenshots/mo. Pro at $15 vs Browserless at $30+ — same Puppeteer, half the price.</p>
+</div>
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
+<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Fast & reliable</h3>
+<p style="font-size:.8rem;color:#a1a1aa">Built on Puppeteer with 30s timeout, network idle wait, and full JavaScript rendering. Returns in 2-5 seconds.</p>
+</div>
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
+<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Developer-first</h3>
+<p style="font-size:.8rem;color:#a1a1aa">API key auth, query param fallback, curl-friendly. GitHub Action for CI/CD. Open source under MIT.</p>
+</div>
+</div>
+</div>
+
+<div class="card">
+<h2>Use cases</h2>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:.5rem">
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
 <div style="font-size:1.5rem;margin-bottom:.3rem">📊</div>
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">Dashboards</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Live previews of any URL</p>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Live webpage previews embedded anywhere</p>
 </div>
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
 <div style="font-size:1.5rem;margin-bottom:.3rem">🔍</div>
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">Monitoring</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual site checks</p>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual checks for site changes</p>
 </div>
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
 <div style="font-size:1.5rem;margin-bottom:.3rem">🤖</div>
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">AI/LLM Tools</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Feed screenshots to models</p>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Feed webpage screenshots to vision models</p>
 </div>
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
 <div style="font-size:1.5rem;margin-bottom:.3rem">🐙</div>
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">CI/CD</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual regression tests</p>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual regression tests in your pipeline</p>
 <a href="https://github.com/bakasa/snapshot-action" target="_blank" style="display:inline-block;margin-top:.5rem;background:#27272a;color:#e4e4e7;font-size:.7rem;font-weight:600;padding:.2rem .6rem;border-radius:4px;text-decoration:none;letter-spacing:.02em">GitHub Action</a>
 </div>
 </div>
 </div>
 
 <div class="card">
-<h2>Join the waitlist</h2>
-<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:.25rem">Pro and Business billing are coming soon. Leave your email and we'll let you know.</p>
+<h2>Ready to upgrade?</h2>
+<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:.25rem">Want more screenshots, JPEG support, or custom viewports? Join the waitlist and we'll notify you the moment Stripe billing goes live. Expected within 48 hours.</p>
 <div class="waitlist-form">
 <input type="email" id="waitlist-email" placeholder="you@example.com" />
-<button class="btn btn-sm" id="waitlistBtn" onclick="joinWaitlist()">Notify Me</button>
+<button class="btn btn-sm" id="waitlistBtn" onclick="joinWaitlist()">Notify Me When Billing Launches</button>
 </div>
 <div id="waitlistMsg" class="msg"></div>
 </div>
