@@ -23,6 +23,22 @@ function getApiKeyFromRequest(c: any): string | null {
 
 const APP_URL = process.env.APP_URL || 'https://snapshot-api-production-1374.up.railway.app';
 
+const demoRateLimit = new Map<string, number>();
+const DEMO_RATE_LIMIT = 10;
+const DEMO_WINDOW_MS = 60000;
+
+function checkDemoRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = demoRateLimit.get(ip);
+  if (!entry || now - entry > DEMO_WINDOW_MS) {
+    demoRateLimit.set(ip, now);
+    return true;
+  }
+  const count = Math.floor((now - entry) / (DEMO_WINDOW_MS / DEMO_RATE_LIMIT));
+  if (count >= DEMO_RATE_LIMIT) return false;
+  return true;
+}
+
 function htmlPage(title: string, content: string, extraScript = ''): string {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -43,6 +59,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica N
 .hero h1{font-size:2.8rem;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hero p{font-size:1.2rem;color:#a1a1aa;margin-top:.75rem;max-width:600px;margin-left:auto;margin-right:auto}
 .hero-sub{font-size:.95rem;color:#71717a;margin-top:.5rem}
+.demo-box{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:1.75rem;margin-bottom:1.25rem;text-align:center}
+.demo-box h2{font-size:1.15rem;font-weight:700;margin-bottom:.5rem;color:#fff;letter-spacing:-.01em}
+.demo-input-row{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;justify-content:center}
+.demo-input-row input[type=text]{flex:1;min-width:220px;max-width:420px;padding:.65rem .9rem;background:#09090b;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:.9rem;font-family:'SF Mono','Fira Code',monospace;outline:none;transition:border-color .15s}
+.demo-input-row input[type=text]:focus{border-color:#06b6d4}
+.demo-input-row input[type=text]::placeholder{color:#52525b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.demo-select{padding:.65rem .9rem;background:#09090b;border:1px solid #27272a;border-radius:8px;color:#e4e4e7;font-size:.9rem;outline:none;cursor:pointer}
+.demo-result{margin-top:1.25rem;display:none;border-radius:8px;overflow:hidden;border:1px solid #27272a;background:#09090b}
+.demo-result img{width:100%;height:auto;display:block}
+.demo-result .meta{display:flex;justify-content:space-between;align-items:center;padding:.6rem 1rem;border-top:1px solid #27272a;font-size:.8rem;color:#a1a1aa;flex-wrap:wrap;gap:.5rem}
+.demo-result .meta .took{color:#22c55e;font-weight:600}
+.demo-spinner{display:none;margin:2rem auto;width:2rem;height:2rem;border:2px solid #27272a;border-top-color:#06b6d4;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.demo-curl{background:#09090b;border:1px solid #27272a;border-radius:8px;padding:.75rem 1rem;font-size:.82rem;color:#86efac;font-family:'SF Mono','Fira Code',monospace;margin-top:.75rem;text-align:left;display:none;word-break:break-all;line-height:1.5}
 .card{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:1.75rem;margin-bottom:1.25rem}
 .card h2{font-size:1.15rem;font-weight:700;margin-bottom:.75rem;color:#fff;letter-spacing:-.01em}
 .card pre{background:#09090b;padding:1rem;border-radius:8px;overflow-x:auto;font-size:.82rem;color:#86efac;margin-top:.5rem;border:1px solid #27272a}
@@ -118,6 +148,25 @@ app.get('/', (c) => {
 <h1>SnapShot API</h1>
 <p>Screenshot any webpage with one curl command. Key in 0 seconds, screenshot in 2-5.</p>
 <p class="hero-sub">No signup · No OAuth · No Docker · No self-hosting · <a href="https://github.com/bakasa/snapshot-action" target="_blank" style="color:#22c55e;text-decoration:none;font-weight:600">GitHub Action ↗</a></p>
+</div>
+
+<div class="demo-box">
+<h2>Try it now — screenshot any page live</h2>
+<p style="color:#a1a1aa;font-size:.9rem">Enter a URL and see the result instantly. No key needed.</p>
+<div class="demo-input-row">
+<input type="text" id="demoUrl" value="https://github.com/trending" placeholder="https://example.com" spellcheck="false" />
+<select class="demo-select" id="demoFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
+<button class="btn" id="demoBtn" onclick="runDemo()">Capture →</button>
+</div>
+<div class="demo-spinner" id="demoSpinner"></div>
+<div class="demo-result" id="demoResult">
+<img id="demoImg" alt="Screenshot preview" />
+<div class="meta">
+<span>Took: <span class="took" id="demoTookMs">—</span></span>
+<a class="btn-outline btn-sm" style="text-decoration:none;display:inline-flex" id="demoDownload" download="screenshot.png">⬇ Download</a>
+</div>
+</div>
+<div class="demo-curl" id="demoCurl"></div>
 </div>
 
 <div class="card" style="text-align:center">
@@ -377,6 +426,45 @@ app.post('/api/waitlist', async (c) => {
   return c.json({ ok: true, total: d.getWaitlistCount() });
 });
 
+app.get('/api/demo', async (c) => {
+  const ip = c.req.header('x-forwarded-for') || c.req.header('x-real-ip') || 'unknown';
+  if (!checkDemoRateLimit(ip)) {
+    return c.json({ error: 'Rate limited. Try again in a moment.' }, 429);
+  }
+
+  const url = c.req.query('url');
+  if (!url) return c.json({ error: '?url= parameter is required' }, 400);
+
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch {
+    return c.json({ error: 'Invalid URL. Must start with http:// or https://' }, 400);
+  }
+
+  const width = parseInt(c.req.query('width') || '1280');
+  const height = c.req.query('height') ? parseInt(c.req.query('height')!) : undefined;
+  const format = (c.req.query('format') || 'png') as 'png' | 'jpeg';
+
+  const devKey = d.getApiKey('dev-key');
+  if (!devKey) return c.json({ error: 'Demo unavailable' }, 500);
+
+  try {
+    const start = Date.now();
+    const result = await takeScreenshot(url, { width, height, format, fullPage: false });
+    const tookMs = Date.now() - start;
+    d.recordScreenshot(devKey.id, url, width, format, 200, result.sizeBytes, tookMs);
+    return c.body(new Uint8Array(result.buffer), 200, {
+      'Content-Type': result.contentType,
+      'X-Demo-Took-Ms': String(tookMs),
+      'Cache-Control': 'public, max-age=300',
+    });
+  } catch (err: any) {
+    return c.json({ error: `Demo failed: ${err.message}` }, 502);
+  }
+});
+
 app.get('/success', async (c) => {
   const sid = c.req.query('session_id') || '';
   return c.html(htmlPage('Success', `
@@ -434,6 +522,39 @@ async function copyReferralLink() {
     document.getElementById('copyRefBtn').textContent = 'Copied!';
     setTimeout(() => document.getElementById('copyRefBtn').textContent = 'Copy Link', 2000);
   } catch { }
+}
+async function runDemo() {
+  const btn = document.getElementById('demoBtn');
+  const spinner = document.getElementById('demoSpinner');
+  const result = document.getElementById('demoResult');
+  const curl = document.getElementById('demoCurl');
+  const img = document.getElementById('demoImg');
+  const took = document.getElementById('demoTookMs');
+  const download = document.getElementById('demoDownload');
+  const url = document.getElementById('demoUrl').value.trim();
+  const fmt = document.getElementById('demoFormat').value;
+  if (!url) return;
+  btn.disabled = true; btn.textContent = 'Capturing...';
+  spinner.style.display = 'block';
+  result.style.display = 'none';
+  curl.style.display = 'none';
+  const params = new URLSearchParams({ url, format: fmt, width: '1280' });
+  try {
+    const r = await fetch('/api/demo?' + params.toString());
+    if (!r.ok) { const e = await r.json(); alert(e.error || 'Demo failed'); btn.disabled = false; btn.textContent = 'Capture →'; spinner.style.display = 'none'; return; }
+    const blob = await r.blob();
+    const urlObj = URL.createObjectURL(blob);
+    img.src = urlObj;
+    download.href = urlObj;
+    download.download = 'screenshot.' + fmt;
+    const tookMs = r.headers.get('X-Demo-Took-Ms') || '?';
+    took.textContent = tookMs + 'ms';
+    result.style.display = 'block';
+    curl.textContent = '# Equivalent curl:\ncurl -H "Authorization: Bearer YOUR_KEY" \\\n  "' + window.location.origin + '/screenshot?url=' + encodeURIComponent(url) + '&format=' + fmt + '&width=1280" \\\n  -o screenshot.' + fmt;
+    curl.style.display = 'block';
+  } catch(e) { alert('Network error'); }
+  btn.disabled = false; btn.textContent = 'Capture →';
+  spinner.style.display = 'none';
 }
 async function joinWaitlist() {
   const email = document.getElementById('waitlist-email').value.trim();
