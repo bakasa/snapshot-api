@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { serve } from '@hono/node-server';
 import { db, getDb, migrate } from './db.js';
 import { takeScreenshot } from './screenshot.js';
+import { isBillingConfigured, createCheckoutSession, handleWebhook, PLANS } from './billing.js';
 
 migrate(getDb());
 
@@ -189,6 +190,41 @@ app.get('/screenshot', async (c) => {
     d.recordScreenshot(apiKey.id, url, width, format, 500, null, null);
     return c.json({ error: `Screenshot failed: ${err.message}` }, 502);
   }
+});
+
+app.post('/api/checkout', async (c) => {
+  if (!isBillingConfigured()) {
+    return c.json({ error: 'Billing not configured. Contact hello@auto.company' }, 501);
+  }
+  const keyStr = getApiKeyFromRequest(c);
+  if (!keyStr) return c.json({ error: 'API key required' }, 401);
+  const apiKey = d.getApiKey(keyStr);
+  if (!apiKey) return c.json({ error: 'Invalid API key' }, 401);
+
+  const body = await c.req.json<{ plan: string; email?: string }>();
+  const url = await createCheckoutSession(body.plan as any, apiKey.id, body.email);
+  if (!url) return c.json({ error: 'Invalid plan or billing not configured' }, 400);
+  return c.json({ url });
+});
+
+app.post('/api/stripe-webhook', async (c) => {
+  const body = await c.req.text();
+  const sig = c.req.header('stripe-signature') || '';
+  const result = await handleWebhook(body, sig);
+  return c.json(result);
+});
+
+app.get('/success', async (c) => {
+  const sid = c.req.query('session_id') || '';
+  return c.html(htmlPage('Success', `
+    <div class="card" style="text-align:center">
+    <h2>Payment successful!</h2>
+    <p style="margin-top:1rem;color:#a1a1aa">
+      Your plan has been upgraded. Session: ${sid.slice(0, 8)}...
+    </p>
+    <a href="/" class="btn" style="margin-top:1rem">Back to home</a>
+    </div>
+  `));
 });
 
 app.get('/health', (c) => c.json({ ok: true }));
