@@ -51,6 +51,25 @@ function htmlPage(title: string, content: string, extraScript = ''): string {
 <meta name="twitter:title" content="SnapShot API — Screenshot-as-a-Service">
 <meta name="twitter:description" content="One endpoint, instant key. Screenshot any webpage as PNG/JPEG. From \$0/mo.">
 <title>${title} — SnapShot API</title>
+<script type="application/ld+json">
+{
+"@context":"https://schema.org",
+"@type":"SoftwareApplication",
+"name":"SnapShot API",
+"applicationCategory":"DeveloperApplication",
+"operatingSystem":"All",
+"description":"Screenshot-as-a-Service. One endpoint, instant API key, no setup. Capture any webpage as PNG or JPEG.",
+"url":"${APP_URL}",
+"offers":{"@type":"Offer","price":"0","priceCurrency":"USD","priceValidUntil":"2027-12-31"}
+}
+</script>
+<script type="application/ld+json">
+{
+"@context":"https://schema.org",
+"@type":"BreadcrumbList",
+"itemListElement":[{"@type":"ListItem","position":1,"name":"SnapShot API","item":"${APP_URL}"}]
+}
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#09090b;color:#e4e4e7;line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -133,6 +152,7 @@ footer a:hover{color:#22c55e}
 ${content}
 <footer>
 <a href="https://github.com/bakasa/snapshot-api" target="_blank">GitHub</a>
+&nbsp;·&nbsp; <a href="/docs">API Docs</a>
 &nbsp;·&nbsp; SnapShot API — Built by <a href="https://auto.company" target="_blank">Auto Company</a>
 &nbsp;·&nbsp; <a href="/health">Status</a>
 </footer>
@@ -477,6 +497,143 @@ app.get('/success', async (c) => {
     </div>
   `));
 });
+
+const OPENAPI_SPEC = {
+  openapi: '3.1.0',
+  info: {
+    title: 'SnapShot API',
+    version: '1.0.0',
+    description: 'Screenshot-as-a-Service. Capture any webpage as PNG or JPEG with a single HTTP request. [Try the live demo](/).',
+    contact: { url: 'https://github.com/bakasa/snapshot-api' },
+  },
+  servers: [{ url: APP_URL, description: 'Production' }],
+  paths: {
+    '/key': {
+      get: {
+        summary: 'Generate a free API key',
+        description: 'Returns an instant API key with 100 screenshots/month. No signup, no email, no credit card.',
+        parameters: [
+          { name: 'ref', in: 'query', required: false, schema: { type: 'string' }, description: 'Referral code to credit the referrer and earn +50 bonus' }
+        ],
+        responses: {
+          '200': {
+            description: 'API key generated',
+            content: { 'application/json': { schema: { type: 'object', properties: {
+              api_key: { type: 'string' },
+              plan: { type: 'string' },
+              monthly_limit: { type: 'integer' },
+              referral_code: { type: 'string' },
+              referral_link: { type: 'string', format: 'uri' },
+              referrer_bonus: { type: 'integer' }
+            }}}}
+          }
+        }
+      }
+    },
+    '/screenshot': {
+      get: {
+        summary: 'Capture a webpage screenshot',
+        description: 'Returns a screenshot image of the specified URL. Requires API key via Authorization header or ?api_key= query parameter.',
+        parameters: [
+          { name: 'url', in: 'query', required: true, schema: { type: 'string', format: 'uri' }, description: 'The URL to capture' },
+          { name: 'width', in: 'query', required: false, schema: { type: 'integer', default: 1280 }, description: 'Viewport width in pixels' },
+          { name: 'height', in: 'query', required: false, schema: { type: 'integer' }, description: 'Viewport height in pixels (defaults to full content height)' },
+          { name: 'format', in: 'query', required: false, schema: { type: 'string', enum: ['png', 'jpeg'], default: 'png' }, description: 'Output image format' },
+          { name: 'fullPage', in: 'query', required: false, schema: { type: 'string', enum: ['true', 'false'], default: 'false' }, description: 'Capture full page height' },
+          { name: 'delay', in: 'query', required: false, schema: { type: 'integer' }, description: 'Delay in milliseconds before capture' },
+          { name: 'api_key', in: 'query', required: false, schema: { type: 'string' }, description: 'API key (alternative to Authorization header)' }
+        ],
+        responses: {
+          '200': { description: 'Screenshot image (PNG or JPEG)' },
+          '400': { description: 'Missing or invalid URL' },
+          '401': { description: 'Missing or invalid API key' },
+          '429': { description: 'Monthly limit exceeded' },
+          '502': { description: 'Screenshot capture failed' }
+        },
+        security: [{ apiKey: [] }]
+      }
+    },
+    '/usage': {
+      get: {
+        summary: 'Check API key usage',
+        description: 'Returns current usage and remaining quota for the API key.',
+        parameters: [
+          { name: 'api_key', in: 'query', required: false, schema: { type: 'string' }, description: 'API key (alternative to Authorization header)' }
+        ],
+        responses: {
+          '200': { description: 'Usage info', content: { 'application/json': { schema: { type: 'object', properties: {
+            key: { type: 'string' },
+            plan: { type: 'string' },
+            monthly_limit: { type: 'integer' },
+            used_this_month: { type: 'integer' },
+            remaining: { type: 'integer' },
+            referral_link: { type: 'string', format: 'uri' }
+          }}}} },
+          '401': { description: 'Missing or invalid API key' }
+        },
+        security: [{ apiKey: [] }]
+      }
+    },
+    '/api/demo': {
+      get: {
+        summary: 'Demo screenshot (rate-limited)',
+        description: 'Try the API without an API key. Rate-limited to 10 requests/minute per IP. Returns screenshot image with X-Demo-Took-Ms header.',
+        parameters: [
+          { name: 'url', in: 'query', required: true, schema: { type: 'string', format: 'uri' }, description: 'The URL to capture' },
+          { name: 'format', in: 'query', required: false, schema: { type: 'string', enum: ['png', 'jpeg'], default: 'png' }, description: 'Output image format' },
+          { name: 'width', in: 'query', required: false, schema: { type: 'integer', default: 1280 }, description: 'Viewport width in pixels' }
+        ],
+        responses: {
+          '200': { description: 'Screenshot image' },
+          '400': { description: 'Missing or invalid URL' },
+          '429': { description: 'Rate limited' },
+          '502': { description: 'Capture failed' }
+        }
+      }
+    },
+    '/api/waitlist': {
+      post: {
+        summary: 'Join the Pro/Business waitlist',
+        description: 'Get notified when Stripe billing launches. Expected within 48 hours.',
+        requestBody: { required: true, content: { 'application/json': { schema: { type: 'object', properties: {
+          email: { type: 'string', format: 'email' },
+          plan: { type: 'string', enum: ['pro', 'business'], default: 'pro' }
+        }, required: ['email'] }}} },
+        responses: {
+          '200': { description: 'Joined waitlist', content: { 'application/json': { schema: { type: 'object', properties: { ok: { type: 'boolean' }, total: { type: 'integer' } } } } } },
+          '400': { description: 'Invalid email' },
+          '409': { description: 'Email already on waitlist' }
+        }
+      }
+    }
+  },
+  components: { securitySchemes: { apiKey: { type: 'apiKey', in: 'header', name: 'Authorization', description: 'Bearer YOUR_API_KEY' } } }
+};
+
+app.get('/sitemap.xml', (c) => c.body(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>${APP_URL}/</loc><priority>1.0</priority></url>
+<url><loc>${APP_URL}/docs</loc><priority>0.9</priority></url>
+<url><loc>${APP_URL}/health</loc><priority>0.1</priority></url>
+</urlset>`, 200, { 'Content-Type': 'application/xml' }));
+
+app.get('/openapi.json', (c) => c.json(OPENAPI_SPEC));
+
+app.get('/docs', (c) => c.html(`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SnapShot API — Docs</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+<style>html{background:#09090b}body{margin:0}.swagger-ui{color:#e4e4e7}.swagger-ui .topbar{display:none}.swagger-ui .info .title{color:#fff!important}.swagger-ui .info{color:#a1a1aa!important}.swagger-ui .info a{color:#22c55e!important}.swagger-ui .opblock-tag{color:#e4e4e7!important}.swagger-ui .opblock-tag small{color:#a1a1aa!important}.swagger-ui .opblock-summary-method{font-weight:700!important}.swagger-ui table thead tr td,.swagger-ui table thead tr th{color:#e4e4e7!important}.swagger-ui .response-col_status,.swagger-ui .response-col_links,.swagger-ui .parameter__name,.swagger-ui .parameter__in,.swagger-ui .parameters-col_name{color:#e4e4e7!important}.swagger-ui .parameter__type,.swagger-ui .responses-inner h4,.swagger-ui .response-col_description{color:#a1a1aa!important}.swagger-ui .model-box,.swagger-ui .model{color:#e4e4e7!important}.swagger-ui .btn{background:#27272a!important;color:#e4e4e7!important;border-color:#3f3f46!important}.swagger-ui .btn.authorize{background:#22c55e!important;color:#09090b!important;border-color:#22c55e!important}.swagger-ui section.models{background:#18181b!important;border-color:#27272a!important}.swagger-ui .model-container{background:#09090b!important;border-color:#27272a!important}.swagger-ui .opblock{background:#18181b!important;border-color:#27272a!important}.swagger-ui .opblock .opblock-summary{background:#18181b!important;border-color:#27272a!important}.swagger-ui .opblock .opblock-section-header{background:#09090b!important;border-color:#27272a!important}.swagger-ui .opblock .opblock-section-header h4{color:#e4e4e7!important}.swagger-ui .opblock-body{background:#18181b!important}.swagger-ui .opblock-body pre{background:#09090b!important;color:#86efac!important;border-color:#27272a!important}.swagger-ui .scheme-container{background:#18181b!important;border-color:#27272a!important;box-shadow:none!important}.swagger-ui select{background:#09090b!important;color:#e4e4e7!important;border-color:#27272a!important}.swagger-ui .loading-container{background:transparent!important}.swagger-ui .dialog-ux .modal-ux{background:#18181b!important;border-color:#27272a!important}.swagger-ui .dialog-ux .modal-ux-content h4{color:#fff!important}.swagger-ui .dialog-ux .modal-ux-content p{color:#a1a1aa!important}.swagger-ui .auth-wrapper .auth-btn-wrapper .btn{background:#27272a!important;border-color:#3f3f46!important}.swagger-ui .auth-container{border-color:#27272a!important;background:#09090b!important}.swagger-ui .auth-container input[type=text]{background:#09090b!important;color:#e4e4e7!important;border-color:#27272a!important}.swagger-ui .auth-container .auth-btn-wrapper .btn.modal-btn.auth{background:#22c55e!important;border-color:#22c55e!important;color:#09090b!important}.swagger-ui .opblock .opblock-summary-description{color:#a1a1aa!important}.swagger-ui .opblock-body .opblock-description-wrapper p{color:#a1a1aa!important}.swagger-ui .markdown p,.swagger-ui .markdown li,.swagger-ui .renderedMarkdown p,.swagger-ui .renderedMarkdown li{color:#a1a1aa!important}.swagger-ui .markdown code,.swagger-ui .renderedMarkdown code{background:#27272a!important;color:#86efac!important;border:none!important}.swagger-ui .expand-operation,.swagger-ui .model-toggle{filter:invert(.8)!important}.swagger-ui .parameter__name.required:after{color:#ef4444!important}.swagger-ui .response-col_description .response-col_links .response-undocumented{color:#a1a1aa!important}.swagger-ui .opblock-summary-control{outline:none!important}.swagger-ui .responses-inner h4,.swagger-ui .responses-inner div,.swagger-ui .responses-inner td{color:#e4e4e7!important}.swagger-ui .responses-inner .response-col_description .response-col_links{color:#a1a1aa!important}body{background:#09090b;display:flex;flex-direction:column}</style>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+<script>
+SwaggerUIBundle({ url: '${APP_URL}/openapi.json', dom_id: '#swagger-ui', deepLinking: true, presets: [SwaggerUIBundle.presets.apis], layout: 'BaseLayout' });
+</script>
+</body>
+</html>`));
 
 app.get('/health', (c) => c.json({ ok: true }));
 
