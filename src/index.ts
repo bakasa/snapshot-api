@@ -282,6 +282,13 @@ app.get('/', (c) => {
 </div>
 
 <div class="card" style="text-align:center">
+<h2>Preview any page in one click</h2>
+<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:.75rem">Drag this link to your bookmarks bar. Click it on any page to get an instant preview.</p>
+<a class="btn" href="javascript:(function(){window.open('${APP_URL}/?url='+encodeURIComponent(location.href))})()" onclick="alert('Drag this link to your bookmarks bar, not click it.')" style="font-size:.85rem;padding:.5rem 1rem">🔍 Preview This Page</a>
+<p style="color:#52525b;font-size:.8rem;margin-top:.5rem">Works on any website. Click the bookmark → instant screenshot + metadata.</p>
+</div>
+
+<div class="card" style="text-align:center">
 <h2>Generate API Key</h2>
 <p style="color:#a1a1aa;font-size:.9rem;margin-bottom:1rem">100 screenshots/month free. No email, no credit card, no signup.</p>
 <button class="btn" id="getKeyBtn" onclick="getKey()">Generate Free API Key →</button>
@@ -823,6 +830,11 @@ ${previewDesc ? `<p class="desc">${escapeHtml(previewDesc)}</p>` : ''}
 </body>
 </html>`);
 });
+
+app.get('/robots.txt', (c) => c.body(`User-agent: *
+Allow: /
+Sitemap: ${APP_URL}/sitemap.xml
+`, 200, { 'Content-Type': 'text/plain' }));
 
 app.get('/sitemap.xml', (c) => c.body(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
