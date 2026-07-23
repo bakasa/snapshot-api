@@ -144,7 +144,39 @@ footer a:hover{color:#22c55e}
 .endpoint .path{color:#e4e4e7}
 .endpoint .desc{color:#a1a1aa;margin-left:4.5rem;font-size:.8rem}
 .bonus-badge{display:inline-block;background:#22c55e;color:#09090b;font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px;text-transform:uppercase;letter-spacing:.03em}
-@media(max-width:640px){.hero h1{font-size:2rem}.container{padding:1.5rem 1rem}}
+.tool-hero{padding:1.5rem 0 1rem;text-align:center}
+.tool-hero h1{font-size:2rem;font-weight:800;letter-spacing:-.02em;background:linear-gradient(135deg,#22c55e,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.tool-hero p{color:#a1a1aa;font-size:.95rem;margin-top:.4rem}
+.tool-input-row{display:flex;gap:.5rem;margin:1.25rem auto;max-width:640px;flex-wrap:wrap;justify-content:center}
+.tool-input-row input[type=text]{flex:1;min-width:240px;padding:.8rem 1rem;background:#09090b;border:1px solid #3f3f46;border-radius:10px;color:#e4e4e7;font-size:1rem;font-family:'SF Mono','Fira Code',monospace;outline:none;transition:all .2s}
+.tool-input-row input[type=text]:focus{border-color:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.15)}
+.tool-input-row input[type=text]::placeholder{color:#52525b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+.preview-card{display:none;margin:1.25rem auto;max-width:720px;background:#18181b;border:1px solid #27272a;border-radius:14px;overflow:hidden}
+.preview-card.show{display:block}
+.preview-screenshot{width:100%;height:auto;display:block;border-bottom:1px solid #27272a;background:#09090b;min-height:120px}
+.preview-meta{padding:1rem 1.25rem}
+.preview-meta .site-row{display:flex;align-items:center;gap:.6rem;margin-bottom:.5rem}
+.preview-meta .favicon{width:18px;height:18px;border-radius:3px;flex-shrink:0}
+.preview-meta .site-name{font-size:.8rem;color:#22c55e;font-weight:600}
+.preview-meta h3{font-size:1.1rem;font-weight:700;color:#fff;margin:.3rem 0;line-height:1.3}
+.preview-meta .desc{font-size:.85rem;color:#a1a1aa;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.preview-actions{display:flex;gap:.5rem;margin-top:.85rem;flex-wrap:wrap;align-items:center}
+.preview-actions .btn-download{background:#22c55e;color:#09090b;font-weight:700;padding:.5rem 1.1rem;border-radius:8px;text-decoration:none;font-size:.85rem;border:none;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.35rem}
+.preview-actions .btn-download:hover{background:#16a34a}
+.preview-actions .btn-secondary{background:transparent;color:#e4e4e7;border:1px solid #3f3f46;padding:.5rem 1rem;border-radius:8px;text-decoration:none;font-size:.85rem;border:1px solid #3f3f46;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:.35rem}
+.preview-actions .btn-secondary:hover{background:#27272a;border-color:#52525b}
+.preview-embed{display:none;margin-top:.75rem;padding-top:.75rem;border-top:1px solid #27272a}
+.preview-embed textarea{width:100%;background:#09090b;border:1px solid #3f3f46;border-radius:8px;color:#86efac;font-family:'SF Mono','Fira Code',monospace;font-size:.8rem;padding:.6rem .8rem;resize:vertical;min-height:60px;outline:none}
+.preview-embed textarea:focus{border-color:#22c55e}
+.preview-error{display:none;margin:1rem auto;max-width:480px;background:#451a1a;border:1px solid #7f1d1d;border-radius:10px;padding:.75rem 1rem;color:#fca5a5;font-size:.85rem;text-align:center}
+.preview-spinner{display:none;margin:2rem auto;width:2rem;height:2rem;border:2px solid #27272a;border-top-color:#06b6d4;border-radius:50%;animation:spin .8s linear infinite}
+.enter-hint{color:#52525b;font-size:.8rem;margin-top:.3rem}
+.tool-to-api{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:1.5rem;margin:1.5rem 0;text-align:center}
+.tool-to-api p{color:#a1a1aa;font-size:.9rem;margin-bottom:.75rem}
+.recent-previews{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.5rem}
+.recent-previews .recent-item{background:#09090b;border:1px solid #27272a;border-radius:8px;padding:.35rem .65rem;font-size:.75rem;color:#71717a;cursor:pointer;transition:all .15s;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.recent-previews .recent-item:hover{border-color:#52525b;color:#e4e4e7}
+@media(max-width:640px){.hero h1{font-size:2rem}.tool-hero h1{font-size:1.5rem}.container{padding:1.5rem 1rem}}
 </style>
 </head>
 <body>
@@ -164,33 +196,54 @@ ${extraScript}
 
 app.get('/', (c) => {
   const content = `
-<div class="hero">
-<h1>SnapShot API</h1>
-<p>Screenshot any webpage with one curl command. Key in 0 seconds, screenshot in 2-5.</p>
-<p class="hero-sub">No signup · No OAuth · No Docker · No self-hosting · <a href="https://github.com/bakasa/snapshot-action" target="_blank" style="color:#22c55e;text-decoration:none;font-weight:600">GitHub Action ↗</a></p>
+<div class="tool-hero">
+<h1>Website Preview Tool</h1>
+<p>Enter any URL to see a live preview — screenshot, title, description &amp; Open Graph data. Free, no signup.</p>
 </div>
 
-<div class="demo-box">
-<h2>Try it now — screenshot any page live</h2>
-<p style="color:#a1a1aa;font-size:.9rem">Enter a URL and see the result instantly. No key needed.</p>
-<div class="demo-input-row">
-<input type="text" id="demoUrl" value="https://github.com/trending" placeholder="https://example.com" spellcheck="false" />
-<select class="demo-select" id="demoFormat"><option value="png">PNG</option><option value="jpeg">JPEG</option></select>
-<button class="btn" id="demoBtn" onclick="runDemo()">Capture →</button>
+<div class="tool-input-row">
+<input type="text" id="toolUrl" value="https://news.ycombinator.com" placeholder="https://example.com" spellcheck="false" autofocus />
+<button class="btn" id="toolBtn">Preview →</button>
 </div>
-<div class="demo-spinner" id="demoSpinner"></div>
-<div class="demo-result" id="demoResult">
-<img id="demoImg" alt="Screenshot preview" />
-<div class="meta">
-<span>Took: <span class="took" id="demoTookMs">—</span></span>
-<a class="btn-outline btn-sm" style="text-decoration:none;display:inline-flex" id="demoDownload" download="screenshot.png">⬇ Download</a>
+<p class="enter-hint" style="text-align:center;margin-top:-.75rem">Press Enter or click Preview. <span id="recentHint" style="display:none">or click a recent URL below.</span></p>
+
+<div class="preview-spinner" id="previewSpinner"></div>
+<div class="preview-error" id="previewError"></div>
+
+<div class="preview-card" id="previewCard">
+<img class="preview-screenshot" id="previewImg" alt="Website screenshot" />
+<div class="preview-meta">
+<div class="site-row">
+<img class="favicon" id="previewFavicon" src="" alt="" />
+<span class="site-name" id="previewSiteName">example.com</span>
+</div>
+<h3 id="previewTitle">Page Title</h3>
+<p class="desc" id="previewDesc">Page description appears here...</p>
+<div class="preview-actions">
+<a class="btn-download" id="previewDownload" download="screenshot.png">⬇ Download Screenshot</a>
+<button class="btn-secondary" id="shareBtn">🔗 Share</button>
+<button class="btn-secondary" id="embedBtn">&lt;/&gt; Embed</button>
+</div>
+<div class="preview-embed" id="previewEmbed">
+<textarea id="embedCode" readonly rows="2"></textarea>
+</div>
+<div class="share-actions" id="shareActions" style="display:none;margin-top:.5rem">
+<a class="share-btn" id="shareXBtn" href="#" target="_blank" style="font-size:.8rem;padding:.35rem .8rem">Post on X</a>
+<button class="share-btn copy-link" id="copyLinkBtn" onclick="copyPageLink()" style="font-size:.8rem;padding:.35rem .8rem">Copy Link</button>
 </div>
 </div>
-<div class="demo-curl" id="demoCurl"></div>
+</div>
+
+<div id="recentUrls" class="recent-previews"></div>
+
+<div class="tool-to-api" id="apiSection">
+<p><strong style="color:#e4e4e7">Need automation?</strong> SnapShot API lets you capture screenshots programmatically — curl, CI/CD, or any HTTP client.</p>
+<button class="btn btn-sm" onclick="document.getElementById('apiSection').scrollIntoView({behavior:'smooth'});getKey()">Get Free API Key →</button>
+<a href="/docs" class="btn-outline btn-sm" style="display:inline-flex;text-decoration:none;margin-left:.4rem">API Docs</a>
 </div>
 
 <div class="card" style="text-align:center">
-<h2>Try it now — get a free API key instantly</h2>
+<h2>Generate API Key</h2>
 <p style="color:#a1a1aa;font-size:.9rem;margin-bottom:1rem">100 screenshots/month free. No email, no credit card, no signup.</p>
 <button class="btn" id="getKeyBtn" onclick="getKey()">Generate Free API Key →</button>
 <div class="gotokey" id="keyResult">
@@ -198,24 +251,30 @@ app.get('/', (c) => {
 <span id="keyDisplay"></span>
 <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copy</button>
 </div>
-<p style="color:#a1a1aa;font-size:.8rem;margin-top:.5rem">Your free key — 100 screenshots/month. Keep this safe!</p>
+<p style="color:#a1a1aa;font-size:.8rem;margin-top:.5rem">Your free key — 100 screenshots/month. Use it with curl, your app, or CI/CD.</p>
 </div>
 <div class="share-section" id="shareSection">
-<p>🚀 <strong>Share & get 50 more screenshots free</strong> — when someone signs up with your link, you both get +50!</p>
+<p style="color:#22c55e;font-size:.85rem"><strong>Referral bonus:</strong> share your key link &amp; get +50 screenshots when someone signs up!</p>
 <div class="share-actions">
-<a class="share-btn" id="shareXBtn" href="#" target="_blank">Post on X</a>
-<button class="share-btn copy-link" id="copyRefBtn" onclick="copyReferralLink()">Copy Link</button>
+<a class="share-btn" id="shareXBtn2" href="#" target="_blank" style="font-size:.8rem;padding:.35rem .8rem">Post on X</a>
+<button class="share-btn copy-link" id="copyRefBtn" onclick="copyReferralLink()" style="font-size:.8rem;padding:.35rem .8rem">Copy Referral Link</button>
 </div>
 </div>
 </div>
 
 <div class="card">
-<h2>How it works</h2>
-<div class="steps">
-<div class="step"><div class="num">1</div><h3>Get a key</h3><p>Click "Generate" or curl /key — instant API key, zero friction, no account</p></div>
-<div class="step"><div class="num">2</div><h3>Capture any page</h3><p>Pass your key and a URL to /screenshot — returns a PNG (or JPEG) in 2-5 seconds</p></div>
-<div class="step"><div class="num">3</div><h3>Use it anywhere</h3><p>Embed in dashboards, CI/CD pipelines, LLM workflows, or monitoring — one endpoint does it all</p></div>
-</div>
+<h2>Quick start</h2>
+<pre><code># 1. Get your free API key
+curl ${APP_URL}/key
+
+# 2. Take a screenshot
+curl -H "Authorization: Bearer YOUR_KEY" \\
+  "${APP_URL}/screenshot?url=https://example.com" \\
+  -o screenshot.png
+
+# 3. Check usage
+curl -H "Authorization: Bearer YOUR_KEY" \\
+  ${APP_URL}/usage</code></pre>
 </div>
 
 <div class="card">
@@ -244,87 +303,47 @@ app.get('/', (c) => {
 </div>
 
 <div class="card">
-<h2>Why SnapShot API?</h2>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.75rem;margin-top:.5rem">
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
-<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Zero setup</h3>
-<p style="font-size:.8rem;color:#a1a1aa">No account, no email, no credit card. Get a key in one click, take a screenshot in one curl.</p>
-</div>
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
-<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Simple pricing</h3>
-<p style="font-size:.8rem;color:#a1a1aa">Free tier: 100 screenshots/mo. Pro at $15 vs Browserless at $30+ — same Puppeteer, half the price.</p>
-</div>
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
-<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Fast & reliable</h3>
-<p style="font-size:.8rem;color:#a1a1aa">Built on Puppeteer with 30s timeout, network idle wait, and full JavaScript rendering. Returns in 2-5 seconds.</p>
-</div>
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem">
-<h3 style="font-size:.9rem;font-weight:600;color:#fff;margin-bottom:.25rem">Developer-first</h3>
-<p style="font-size:.8rem;color:#a1a1aa">API key auth, query param fallback, curl-friendly. GitHub Action for CI/CD. Open source under MIT.</p>
-</div>
-</div>
-</div>
-
-<div class="card">
 <h2>Use cases</h2>
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:.5rem">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem">
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
-<div style="font-size:1.5rem;margin-bottom:.3rem">📊</div>
+<h3 style="font-size:.9rem;font-weight:600;color:#fff">Blog posts</h3>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Add website preview images to your articles</p>
+</div>
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">Dashboards</h3>
 <p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Live webpage previews embedded anywhere</p>
 </div>
 <div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
-<div style="font-size:1.5rem;margin-bottom:.3rem">🔍</div>
-<h3 style="font-size:.9rem;font-weight:600;color:#fff">Monitoring</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual checks for site changes</p>
-</div>
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
-<div style="font-size:1.5rem;margin-bottom:.3rem">🤖</div>
-<h3 style="font-size:.9rem;font-weight:600;color:#fff">AI/LLM Tools</h3>
-<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Feed webpage screenshots to vision models</p>
-</div>
-<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
-<div style="font-size:1.5rem;margin-bottom:.3rem">🐙</div>
 <h3 style="font-size:.9rem;font-weight:600;color:#fff">CI/CD</h3>
 <p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Visual regression tests in your pipeline</p>
-<a href="https://github.com/bakasa/snapshot-action" target="_blank" style="display:inline-block;margin-top:.5rem;background:#27272a;color:#e4e4e7;font-size:.7rem;font-weight:600;padding:.2rem .6rem;border-radius:4px;text-decoration:none;letter-spacing:.02em">GitHub Action</a>
+</div>
+<div style="background:#09090b;border:1px solid #27272a;border-radius:8px;padding:1rem;text-align:center">
+<h3 style="font-size:.9rem;font-weight:600;color:#fff">AI/LLM</h3>
+<p style="font-size:.8rem;color:#a1a1aa;margin-top:.25rem">Feed webpage screenshots to vision models</p>
 </div>
 </div>
 </div>
 
 <div class="card">
 <h2>Ready to upgrade?</h2>
-<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:.25rem">Want more screenshots, JPEG support, or custom viewports? Join the waitlist and we'll notify you the moment Stripe billing goes live. Expected within 48 hours.</p>
+<p style="color:#a1a1aa;font-size:.9rem;margin-bottom:.25rem">Need more screenshots, JPEG, or custom viewports? Join the waitlist — we'll notify you when Pro billing launches.</p>
 <div class="waitlist-form">
 <input type="email" id="waitlist-email" placeholder="you@example.com" />
-<button class="btn btn-sm" id="waitlistBtn" onclick="joinWaitlist()">Notify Me When Billing Launches</button>
+<button class="btn btn-sm" id="waitlistBtn" onclick="joinWaitlist()">Notify Me</button>
 </div>
 <div id="waitlistMsg" class="msg"></div>
 </div>
 
 <div class="card">
-<h2>Quick start</h2>
-<pre><code># 1. Get your free API key
-curl ${APP_URL}/key
-
-# 2. Take a screenshot
-curl -H "Authorization: Bearer YOUR_KEY" \\
-  "${APP_URL}/screenshot?url=https://example.com" \\
-  -o screenshot.png
-
-# 3. Check usage
-curl -H "Authorization: Bearer YOUR_KEY" \\
-  ${APP_URL}/usage</code></pre>
-</div>
-
-<div class="card">
-<h2>API Reference</h2>
-<div class="endpoint"><span class="method">GET</span><span class="path">/screenshot?url=...&width=...&height=...&format=...&fullPage=true&delay=...</span></div>
-<div class="endpoint desc">Capture a webpage screenshot. Returns PNG or JPEG based on format param.</div>
+<h2>API Endpoints</h2>
+<div class="endpoint"><span class="method">GET</span><span class="path">/screenshot?url=...&format=...&width=...&height=...&fullPage=...&delay=...</span></div>
+<div class="endpoint desc">Capture a webpage screenshot (requires API key).</div>
 <div class="endpoint" style="margin-top:.6rem"><span class="method">GET</span><span class="path">/key[?ref=CODE]</span></div>
-<div class="endpoint desc">Generate a free API key. Pass ?ref= to credit a referrer and earn bonuses.</div>
+<div class="endpoint desc">Generate a free API key instantly.</div>
 <div class="endpoint" style="margin-top:.6rem"><span class="method">GET</span><span class="path">/usage</span></div>
-<div class="endpoint desc">Check your current usage and remaining quota for the month.</div>
+<div class="endpoint desc">Check current usage and remaining quota.</div>
+<div class="endpoint" style="margin-top:.6rem"><span class="method">GET</span><span class="path">/api/metadata?url=...</span></div>
+<div class="endpoint desc">Fetch page metadata (title, description, OG tags, favicon).</div>
 </div>`;
   return c.html(htmlPage('Home', content, pageScript()));
 });
@@ -485,6 +504,60 @@ app.get('/api/demo', async (c) => {
   }
 });
 
+app.get('/api/metadata', async (c) => {
+  const targetUrl = c.req.query('url');
+  if (!targetUrl) return c.json({ error: '?url= parameter is required' }, 400);
+
+  let parsed: URL;
+  try {
+    parsed = new URL(targetUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch {
+    return c.json({ error: 'Invalid URL. Must start with http:// or https://' }, 400);
+  }
+
+  try {
+    const response = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SnapShotPreview/1.0)' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const html = await response.text();
+
+    const extract = (pattern: RegExp) => pattern.exec(html)?.[1]?.trim() || null;
+    const title = extract(/<title[^>]*>([^<]*)<\/title>/i) || parsed.hostname;
+    const description = extract(/<meta\s+name="description"\s+content="([^"]*)"/i)
+      || extract(/<meta\s+content="([^"]*)"\s+name="description"/i) || '';
+    const ogImage = extract(/<meta\s+property="og:image"\s+content="([^"]*)"/i)
+      || extract(/<meta\s+content="([^"]*)"\s+property="og:image"/i);
+    const ogTitle = extract(/<meta\s+property="og:title"\s+content="([^"]*)"/i)
+      || extract(/<meta\s+content="([^"]*)"\s+property="og:title"/i);
+    const ogDescription = extract(/<meta\s+property="og:description"\s+content="([^"]*)"/i)
+      || extract(/<meta\s+content="([^"]*)"\s+property="og:description"/i);
+    const icon = extract(/<link\s+rel="icon"\s+[^>]*href="([^"]*)"/i)
+      || extract(/<link\s+rel="shortcut\s+icon"\s+[^>]*href="([^"]*)"/i);
+
+    const resolveUrl = (u: string) => {
+      try { return new URL(u, targetUrl).href; } catch { return u; }
+    };
+
+    return c.json({
+      url: targetUrl,
+      title: ogTitle || title,
+      description: ogDescription || description,
+      ogImage: ogImage ? resolveUrl(ogImage) : null,
+      icon: icon ? resolveUrl(icon) : null,
+      siteName: extract(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i) || parsed.hostname,
+    });
+  } catch (err: any) {
+    return c.json({
+      error: `Failed to fetch: ${err.message}`,
+      url: targetUrl,
+      title: parsed.hostname,
+      description: '',
+    }, 502);
+  }
+});
+
 app.get('/success', async (c) => {
   const sid = c.req.query('session_id') || '';
   return c.html(htmlPage('Success', `
@@ -642,76 +715,133 @@ function pageScript(): string {
 const urlParams = new URLSearchParams(window.location.search);
 const refParam = urlParams.get('ref');
 let lastKeyData = null;
+const RECENT_KEY = 'snapshot_recent_urls';
+
+function getRecentUrls() {
+  try { return JSON.parse(localStorage.getItem(RECENT_KEY) || '[]'); } catch { return []; }
+}
+function addRecentUrl(url) {
+  let urls = getRecentUrls().filter(u => u !== url);
+  urls.unshift(url);
+  if (urls.length > 6) urls = urls.slice(0, 6);
+  localStorage.setItem(RECENT_KEY, JSON.stringify(urls));
+  renderRecentUrls();
+}
+function renderRecentUrls() {
+  const container = document.getElementById('recentUrls');
+  const hint = document.getElementById('recentHint');
+  const urls = getRecentUrls();
+  if (!urls.length) { container.innerHTML = ''; hint.style.display = 'none'; return; }
+  hint.style.display = 'inline';
+  container.innerHTML = urls.map(u => '<span class="recent-item" onclick="document.getElementById(\\'toolUrl\\').value=\\'' + u.replace(/'/g, "\\'") + '\\';previewUrl()">' + u.replace(/^https?:\\/\\//, '') + '</span>').join('');
+}
+
+async function previewUrl() {
+  const input = document.getElementById('toolUrl');
+  const btn = document.getElementById('toolBtn');
+  const spinner = document.getElementById('previewSpinner');
+  const error = document.getElementById('previewError');
+  const card = document.getElementById('previewCard');
+  const url = input.value.trim();
+  if (!url) return;
+  btn.disabled = true; btn.textContent = 'Loading...';
+  spinner.style.display = 'block';
+  error.style.display = 'none';
+  card.classList.remove('show');
+  card.style.display = 'none';
+  document.getElementById('shareActions').style.display = 'none';
+  try {
+    const metaResp = await fetch('/api/metadata?url=' + encodeURIComponent(url));
+    const meta = await metaResp.json();
+    document.getElementById('previewTitle').textContent = meta.title || url;
+    document.getElementById('previewDesc').textContent = meta.description || 'No description available.';
+    document.getElementById('previewSiteName').textContent = meta.siteName || new URL(url).hostname;
+    if (meta.icon) {
+      document.getElementById('previewFavicon').src = meta.icon;
+      document.getElementById('previewFavicon').onerror = function() { this.style.display = 'none'; };
+    } else {
+      document.getElementById('previewFavicon').style.display = 'none';
+    }
+    const demoResp = await fetch('/api/demo?url=' + encodeURIComponent(url) + '&format=png&width=1280');
+    if (!demoResp.ok) {
+      const e = await demoResp.json().catch(() => ({}));
+      throw new Error(e.error || 'Screenshot failed');
+    }
+    const blob = await demoResp.blob();
+    const imgUrl = URL.createObjectURL(blob);
+    document.getElementById('previewImg').src = imgUrl;
+    const download = document.getElementById('previewDownload');
+    download.href = imgUrl;
+    download.download = 'screenshot-' + new URL(url).hostname.replace(/^www\\./, '') + '.png';
+    const embedCode = '<a href=\\"' + url.replace(/"/g, '&quot;') + '\\"><img src=\\"' + window.location.origin + '/api/demo?url=' + encodeURIComponent(url) + '&format=png&width=1280\\" alt=\\"' + (meta.title || 'Screenshot').replace(/"/g, '&quot;') + '\\" /></a>';
+    document.getElementById('embedCode').textContent = embedCode;
+    document.getElementById('shareXBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('Check out: ' + (meta.title || url));
+    card.style.display = 'block';
+    card.classList.add('show');
+    addRecentUrl(url);
+  } catch(e) {
+    error.textContent = e.message || 'Failed to load preview. Try a different URL.';
+    error.style.display = 'block';
+    card.classList.remove('show');
+    card.style.display = 'none';
+  }
+  btn.disabled = false; btn.textContent = 'Preview →';
+  spinner.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const input = document.getElementById('toolUrl');
+  const btn = document.getElementById('toolBtn');
+  input.addEventListener('keydown', function(e) { if (e.key === 'Enter') previewUrl(); });
+  btn.addEventListener('click', previewUrl);
+  const urlParam = urlParams.get('url');
+  if (urlParam) { input.value = urlParam; previewUrl(); }
+  renderRecentUrls();
+});
+
+document.getElementById('shareBtn').addEventListener('click', function() {
+  const el = document.getElementById('shareActions');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+});
+document.getElementById('embedBtn').addEventListener('click', function() {
+  const el = document.getElementById('previewEmbed');
+  if (el.style.display === 'block') { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  document.getElementById('embedCode').select();
+});
+
+async function copyPageLink() {
+  const el = document.getElementById('toolUrl');
+  const url = el.value.trim();
+  if (!url) return;
+  const link = window.location.origin + '?url=' + encodeURIComponent(url);
+  try { await navigator.clipboard.writeText(link); document.getElementById('copyLinkBtn').textContent = 'Copied!'; setTimeout(() => document.getElementById('copyLinkBtn').textContent = 'Copy Link', 2000); } catch {}
+}
 
 async function getKey() {
   const btn = document.getElementById('getKeyBtn');
   btn.disabled = true; btn.textContent = 'Generating...';
   try {
-    const url = refParam ? '/key?ref=' + encodeURIComponent(refParam) : '/key';
-    const r = await fetch(url);
+    const r = await fetch(refParam ? '/key?ref=' + encodeURIComponent(refParam) : '/key');
     const d = await r.json();
     lastKeyData = d;
     document.getElementById('keyDisplay').textContent = d.api_key;
     document.getElementById('keyResult').style.display = 'block';
     document.getElementById('shareSection').style.display = 'block';
-    document.getElementById('referralLink').textContent = d.referral_link;
-    const shareText = encodeURIComponent('Just got a free SnapShot API key in one click! Screenshot any webpage with a single curl. No signup, no email. Get yours: ' + d.referral_link);
-    document.getElementById('shareXBtn').href = 'https://twitter.com/intent/tweet?text=' + shareText;
-    document.getElementById('shareLinkInput').value = d.referral_link;
+    const shareText = encodeURIComponent('Just got a free SnapShot API key in one click! Screenshot any webpage. Get yours: ' + d.referral_link);
+    document.getElementById('shareXBtn2').href = 'https://twitter.com/intent/tweet?text=' + shareText;
     btn.textContent = 'Generate Another Key';
-  } catch(e) {
-    btn.textContent = 'Error - try again';
-  }
+  } catch(e) { btn.textContent = 'Error - try again'; }
   btn.disabled = false;
 }
 async function copyKey() {
   const key = document.getElementById('keyDisplay').textContent;
-  try {
-    await navigator.clipboard.writeText(key);
-    document.getElementById('copyBtn').textContent = 'Copied!';
-    setTimeout(() => document.getElementById('copyBtn').textContent = 'Copy', 2000);
-  } catch { }
+  try { await navigator.clipboard.writeText(key); document.getElementById('copyBtn').textContent = 'Copied!'; setTimeout(() => document.getElementById('copyBtn').textContent = 'Copy', 2000); } catch {}
 }
 async function copyReferralLink() {
-  const link = document.getElementById('referralLink').textContent;
-  try {
-    await navigator.clipboard.writeText(link);
-    document.getElementById('copyRefBtn').textContent = 'Copied!';
-    setTimeout(() => document.getElementById('copyRefBtn').textContent = 'Copy Link', 2000);
-  } catch { }
-}
-async function runDemo() {
-  const btn = document.getElementById('demoBtn');
-  const spinner = document.getElementById('demoSpinner');
-  const result = document.getElementById('demoResult');
-  const curl = document.getElementById('demoCurl');
-  const img = document.getElementById('demoImg');
-  const took = document.getElementById('demoTookMs');
-  const download = document.getElementById('demoDownload');
-  const url = document.getElementById('demoUrl').value.trim();
-  const fmt = document.getElementById('demoFormat').value;
-  if (!url) return;
-  btn.disabled = true; btn.textContent = 'Capturing...';
-  spinner.style.display = 'block';
-  result.style.display = 'none';
-  curl.style.display = 'none';
-  const params = new URLSearchParams({ url, format: fmt, width: '1280' });
-  try {
-    const r = await fetch('/api/demo?' + params.toString());
-    if (!r.ok) { const e = await r.json(); alert(e.error || 'Demo failed'); btn.disabled = false; btn.textContent = 'Capture →'; spinner.style.display = 'none'; return; }
-    const blob = await r.blob();
-    const urlObj = URL.createObjectURL(blob);
-    img.src = urlObj;
-    download.href = urlObj;
-    download.download = 'screenshot.' + fmt;
-    const tookMs = r.headers.get('X-Demo-Took-Ms') || '?';
-    took.textContent = tookMs + 'ms';
-    result.style.display = 'block';
-    curl.textContent = '# Equivalent curl:\ncurl -H "Authorization: Bearer YOUR_KEY" \\\n  "' + window.location.origin + '/screenshot?url=' + encodeURIComponent(url) + '&format=' + fmt + '&width=1280" \\\n  -o screenshot.' + fmt;
-    curl.style.display = 'block';
-  } catch(e) { alert('Network error'); }
-  btn.disabled = false; btn.textContent = 'Capture →';
-  spinner.style.display = 'none';
+  const link = lastKeyData && lastKeyData.referral_link;
+  if (!link) return;
+  try { await navigator.clipboard.writeText(link); document.getElementById('copyRefBtn').textContent = 'Copied!'; setTimeout(() => document.getElementById('copyRefBtn').textContent = 'Copy Link', 2000); } catch {}
 }
 async function joinWaitlist() {
   const email = document.getElementById('waitlist-email').value.trim();
@@ -722,7 +852,7 @@ async function joinWaitlist() {
   try {
     const r = await fetch('/api/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email}) });
     const d = await r.json();
-    if (d.ok) { msg.className = 'msg success'; msg.textContent = 'You\\'re on the list! We\\'ll let you know when Pro launches.'; document.getElementById('waitlist-email').value = ''; }
+    if (d.ok) { msg.className = 'msg success'; msg.textContent = 'You\\'re on the list! We\\'ll notify you when Pro launches.'; document.getElementById('waitlist-email').value = ''; }
     else { msg.className = 'msg error'; msg.textContent = d.error || 'Something went wrong'; }
   } catch(e) { msg.className = 'msg error'; msg.textContent = 'Network error - try again'; }
   btn.disabled = false; btn.textContent = 'Notify Me';
