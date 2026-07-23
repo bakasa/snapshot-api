@@ -23,6 +23,43 @@ function getApiKeyFromRequest(c: any): string | null {
 
 const APP_URL = process.env.APP_URL || 'https://snapshot-api-production-1374.up.railway.app';
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+async function fetchPageMetadata(targetUrl: string, parsed: URL): Promise<{
+  title: string; description: string; ogImage: string | null;
+  ogTitle: string | null; ogDescription: string | null;
+  icon: string | null; siteName: string;
+}> {
+  try {
+    const response = await fetch(targetUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SnapShotPreview/1.0)' },
+      signal: AbortSignal.timeout(5000),
+    });
+    const html = await response.text();
+    const extract = (pattern: RegExp) => pattern.exec(html)?.[1]?.trim() || null;
+    const resolveUrl = (u: string) => { try { return new URL(u, targetUrl).href; } catch { return u; } };
+    const icon = extract(/<link\s+rel="icon"\s+[^>]*href="([^"]*)"/i)
+      || extract(/<link\s+rel="shortcut\s+icon"\s+[^>]*href="([^"]*)"/i);
+    return {
+      title: extract(/<title[^>]*>([^<]*)<\/title>/i) || parsed.hostname,
+      description: extract(/<meta\s+name="description"\s+content="([^"]*)"/i)
+        || extract(/<meta\s+content="([^"]*)"\s+name="description"/i) || '',
+      ogImage: extract(/<meta\s+property="og:image"\s+content="([^"]*)"/i)
+        || extract(/<meta\s+content="([^"]*)"\s+property="og:image"/i),
+      ogTitle: extract(/<meta\s+property="og:title"\s+content="([^"]*)"/i)
+        || extract(/<meta\s+content="([^"]*)"\s+property="og:title"/i),
+      ogDescription: extract(/<meta\s+property="og:description"\s+content="([^"]*)"/i)
+        || extract(/<meta\s+content="([^"]*)"\s+property="og:description"/i),
+      icon: icon ? resolveUrl(icon) : null,
+      siteName: extract(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i) || parsed.hostname,
+    };
+  } catch {
+    return { title: parsed.hostname, description: '', ogImage: null, ogTitle: null, ogDescription: null, icon: null, siteName: parsed.hostname };
+  }
+}
+
 const demoRateLimit = new Map<string, number>();
 const DEMO_RATE_LIMIT = 10;
 const DEMO_WINDOW_MS = 60000;
@@ -43,31 +80,33 @@ function htmlPage(title: string, content: string, extraScript = ''): string {
   return `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="SnapShot API — Screenshot-as-a-Service. One endpoint, instant API key, no setup. Capture any webpage as PNG or JPEG.">
-<meta name="keywords" content="screenshot API, webpage screenshot, Puppeteer API, screenshot service, headless browser API">
-<meta property="og:title" content="SnapShot API — Screenshot-as-a-Service">
-<meta property="og:description" content="One endpoint, instant API key, no setup. Capture any webpage as a screenshot. From \$0/mo.">
+<meta name="description" content="Website Preview Tool — Free online tool to preview any website. Get screenshot, title, description, OG tags & favicon instantly. No signup required.">
+<meta name="keywords" content="website preview, website screenshot, URL preview, link preview, OG tag checker, meta tag inspector, screenshot tool">
+<meta property="og:title" content="Website Preview Tool — Free Screenshot & Metadata Tool">
+<meta property="og:description" content="Paste any URL to see a live preview — screenshot, title, description, Open Graph data & favicon. Free, no signup.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="${APP_URL}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="SnapShot API — Screenshot-as-a-Service">
-<meta name="twitter:description" content="One endpoint, instant key. Screenshot any webpage as PNG/JPEG. From \$0/mo.">
-<title>${title} — SnapShot API</title>
+<meta name="twitter:title" content="Website Preview Tool — Free Screenshot & Metadata Tool">
+<meta name="twitter:description" content="Paste any URL to see a live preview — screenshot, title, description, OG tags & favicon. Free, no signup.">
+<title>${title} — Website Preview Tool</title>
 <script type="application/ld+json">
 {
 "@context":"https://schema.org",
-"@type":"SoftwareApplication",
-"name":"SnapShot API",
+"@type":"WebApplication",
+"name":"Website Preview Tool",
 "applicationCategory":"DeveloperApplication",
 "operatingSystem":"All",
-"description":"Screenshot-as-a-Service. One endpoint, instant API key, no setup. Capture any webpage as PNG or JPEG.",
+"description":"Free online tool to preview any website. Get screenshot, page title, description, Open Graph tags, and favicon instantly. No signup.",
 "url":"${APP_URL}",
-"offers":{"@type":"Offer","price":"0","priceCurrency":"USD","priceValidUntil":"2027-12-31"}
+"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}
 }
 </script>
 <script type="application/ld+json">
 {
 "@context":"https://schema.org",
 "@type":"BreadcrumbList",
-"itemListElement":[{"@type":"ListItem","position":1,"name":"SnapShot API","item":"${APP_URL}"}]
+"itemListElement":[{"@type":"ListItem","position":1,"name":"Website Preview Tool","item":"${APP_URL}"}]
 }
 </script>
 <style>
@@ -185,7 +224,7 @@ ${content}
 <footer>
 <a href="https://github.com/bakasa/snapshot-api" target="_blank">GitHub</a>
 &nbsp;·&nbsp; <a href="/docs">API Docs</a>
-&nbsp;·&nbsp; SnapShot API — Built by <a href="https://auto.company" target="_blank">Auto Company</a>
+&nbsp;·&nbsp; Website Preview Tool — Built by <a href="https://auto.company" target="_blank">Auto Company</a>
 &nbsp;·&nbsp; <a href="/health">Status</a>
 </footer>
 </div>
@@ -683,11 +722,114 @@ const OPENAPI_SPEC = {
   components: { securitySchemes: { apiKey: { type: 'apiKey', in: 'header', name: 'Authorization', description: 'Bearer YOUR_API_KEY' } } }
 };
 
+app.get('/preview', async (c) => {
+  const targetUrl = c.req.query('url');
+  if (!targetUrl) return c.redirect('/');
+
+  let parsed: URL;
+  try {
+    parsed = new URL(targetUrl);
+    if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error();
+  } catch {
+    return c.redirect('/');
+  }
+
+  const meta = await fetchPageMetadata(targetUrl, parsed);
+  const previewTitle = meta.ogTitle || meta.title;
+  const previewDesc = meta.ogDescription || meta.description || `Preview of ${targetUrl}`;
+  const previewImg = meta.ogImage;
+  const encodedUrl = encodeURIComponent(targetUrl);
+  const displayHost = parsed.hostname.replace(/^www\./, '');
+
+  const ogImageTag = previewImg
+    ? `<meta property="og:image" content="${escapeHtml(previewImg)}"><meta name="twitter:card" content="summary_large_image">`
+    : `<meta name="twitter:card" content="summary">`;
+
+  return c.html(`<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escapeHtml(previewTitle)} — Website Preview</title>
+<meta name="description" content="${escapeHtml(previewDesc)}">
+<meta property="og:title" content="${escapeHtml(previewTitle)}">
+<meta property="og:description" content="${escapeHtml(previewDesc)}">
+<meta property="og:type" content="website">
+<meta property="og:url" content="${APP_URL}/preview?url=${encodedUrl}">
+${ogImageTag}
+<meta name="twitter:title" content="${escapeHtml(previewTitle)}">
+<meta name="twitter:description" content="${escapeHtml(previewDesc)}">
+<link rel="canonical" href="${APP_URL}/preview?url=${encodedUrl}">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',sans-serif;background:#09090b;color:#e4e4e7;line-height:1.6;-webkit-font-smoothing:antialiased}
+.container{max-width:780px;margin:0 auto;padding:2rem 1.5rem}
+.header{text-align:center;margin-bottom:1.5rem}
+.header h1{font-size:1.1rem;font-weight:700;color:#fff}
+.header .sub{color:#52525b;font-size:.8rem;margin-top:.2rem}
+.preview-img{width:100%;border-radius:12px;border:1px solid #27272a;overflow:hidden;background:#18181b}
+.preview-img img{width:100%;height:auto;display:block}
+.meta-card{background:#18181b;border:1px solid #27272a;border-radius:12px;padding:1.25rem;margin-top:1rem}
+.meta-card .site-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.4rem}
+.meta-card .favicon{width:16px;height:16px;border-radius:3px;flex-shrink:0}
+.meta-card .site-name{font-size:.8rem;color:#22c55e;font-weight:600}
+.meta-card h2{font-size:1.15rem;font-weight:700;color:#fff;margin:.3rem 0;line-height:1.3}
+.meta-card .desc{font-size:.85rem;color:#a1a1aa;line-height:1.5;margin-top:.25rem}
+.meta-card .url-bar{font-size:.75rem;color:#52525b;margin-top:.5rem;word-break:break-all;font-family:'SF Mono','Fira Code',monospace}
+.cta{text-align:center;margin:1.5rem 0;padding:1.25rem;background:linear-gradient(135deg,#18181b,#1a2e1a);border:1px solid #22c55e33;border-radius:12px}
+.cta p{color:#a1a1aa;font-size:.9rem;margin-bottom:.75rem}
+.cta .btn{display:inline-flex;align-items:center;gap:.4rem;background:#22c55e;color:#09090b;font-weight:700;padding:.6rem 1.3rem;border-radius:8px;text-decoration:none;font-size:.85rem;border:none;cursor:pointer;transition:all .15s}
+.cta .btn:hover{background:#16a34a;transform:translateY(-1px)}
+.cta .btn .arrow{transition:transform .15s}
+.cta .btn:hover .arrow{transform:translateX(3px)}
+.share-row{display:flex;gap:.5rem;justify-content:center;margin-top:.75rem;flex-wrap:wrap}
+.share-btn{display:inline-flex;align-items:center;gap:.35rem;background:#1d9bf0;color:#fff;font-weight:600;padding:.4rem .9rem;border-radius:8px;text-decoration:none;font-size:.8rem;border:none;cursor:pointer;transition:all .15s}
+.share-btn:hover{background:#1a8cd8}
+.share-btn.copy{background:#27272a;color:#e4e4e7;border:1px solid #3f3f46}
+.share-btn.copy:hover{background:#3f3f46}
+footer{border-top:1px solid #27272a;padding:1.5rem 0;margin-top:2rem;text-align:center;color:#52525b;font-size:.8rem}
+footer a{color:#a1a1aa;text-decoration:none}
+footer a:hover{color:#22c55e}
+@media(max-width:640px){.container{padding:1.5rem 1rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="header">
+<h1>${escapeHtml(displayHost)} Preview</h1>
+<p class="sub">Generated by Website Preview Tool</p>
+</div>
+<div class="preview-img">
+<img src="${APP_URL}/api/demo?url=${encodedUrl}&format=png&width=1280" alt="Screenshot of ${escapeHtml(targetUrl)}" loading="lazy" onerror="this.parentElement.innerHTML='<div style=padding:2rem;text-align:center;color:#52525b;font-size:.85rem>Could not load screenshot</div>'">
+</div>
+<div class="meta-card">
+<div class="site-row">${meta.icon ? `<img class="favicon" src="${escapeHtml(meta.icon)}" alt="" onerror="this.style.display='none'">` : ''}<span class="site-name">${escapeHtml(meta.siteName)}</span></div>
+<h2>${escapeHtml(previewTitle)}</h2>
+${previewDesc ? `<p class="desc">${escapeHtml(previewDesc)}</p>` : ''}
+<p class="url-bar">${escapeHtml(targetUrl)}</p>
+</div>
+<div class="share-row">
+<a class="share-btn" href="https://twitter.com/intent/tweet?text=${encodeURIComponent('Preview of ' + previewTitle + ' ' + APP_URL + '/preview?url=' + encodedUrl)}" target="_blank" rel="noopener">Post on X</a>
+<button class="share-btn copy" onclick="navigator.clipboard.writeText('${APP_URL}/preview?url=${encodedUrl}').then(()=>{this.textContent='Copied!'}).catch(()=>{})">Copy Link</button>
+</div>
+<div class="cta">
+<p><strong>Want to preview any website?</strong> Free, no signup — paste any URL and get screenshot + metadata instantly.</p>
+<a class="btn" href="/?url=${encodedUrl}">Try It Yourself <span class="arrow">→</span></a>
+</div>
+<footer>
+<a href="https://github.com/bakasa/snapshot-api" target="_blank">GitHub</a>
+&nbsp;·&nbsp; <a href="/">Website Preview Tool</a>
+&nbsp;·&nbsp; <a href="/docs">API</a>
+</footer>
+</div>
+</body>
+</html>`);
+});
+
 app.get('/sitemap.xml', (c) => c.body(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <url><loc>${APP_URL}/</loc><priority>1.0</priority></url>
 <url><loc>${APP_URL}/docs</loc><priority>0.9</priority></url>
 <url><loc>${APP_URL}/health</loc><priority>0.1</priority></url>
+<url><loc>${APP_URL}/preview</loc><priority>0.6</priority></url>
 </urlset>`, 200, { 'Content-Type': 'application/xml' }));
 
 app.get('/openapi.json', (c) => c.json(OPENAPI_SPEC));
@@ -775,7 +917,9 @@ async function previewUrl() {
     download.download = 'screenshot-' + new URL(url).hostname.replace(/^www\\./, '') + '.png';
     const embedCode = '<a href=\\"' + url.replace(/"/g, '&quot;') + '\\"><img src=\\"' + window.location.origin + '/api/demo?url=' + encodeURIComponent(url) + '&format=png&width=1280\\" alt=\\"' + (meta.title || 'Screenshot').replace(/"/g, '&quot;') + '\\" /></a>';
     document.getElementById('embedCode').textContent = embedCode;
-    document.getElementById('shareXBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('Check out: ' + (meta.title || url));
+    const previewLink = window.location.origin + '/preview?url=' + encodeURIComponent(url);
+    document.getElementById('shareXBtn').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent('Preview of ' + (meta.title || url) + ' ') + encodeURIComponent(previewLink);
+    document.getElementById('copyLinkBtn').dataset.previewLink = previewLink;
     card.style.display = 'block';
     card.classList.add('show');
     addRecentUrl(url);
@@ -811,11 +955,14 @@ document.getElementById('embedBtn').addEventListener('click', function() {
 });
 
 async function copyPageLink() {
-  const el = document.getElementById('toolUrl');
-  const url = el.value.trim();
-  if (!url) return;
-  const link = window.location.origin + '?url=' + encodeURIComponent(url);
-  try { await navigator.clipboard.writeText(link); document.getElementById('copyLinkBtn').textContent = 'Copied!'; setTimeout(() => document.getElementById('copyLinkBtn').textContent = 'Copy Link', 2000); } catch {}
+  const el = document.getElementById('copyLinkBtn');
+  const link = el.dataset.previewLink;
+  if (!link) {
+    const urlInput = document.getElementById('toolUrl').value.trim();
+    if (!urlInput) return;
+    el.dataset.previewLink = window.location.origin + '/preview?url=' + encodeURIComponent(urlInput);
+  }
+  try { await navigator.clipboard.writeText(el.dataset.previewLink); el.textContent = 'Copied!'; setTimeout(() => el.textContent = 'Copy Link', 2000); } catch {}
 }
 
 async function getKey() {
